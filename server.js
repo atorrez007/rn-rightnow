@@ -1,7 +1,13 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
 
 const app = express();
+
+mongoose.connect("mongodb://localhost/rn-data", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
