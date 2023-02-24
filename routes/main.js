@@ -105,6 +105,17 @@ router.get("/reviews", (req, res) => {
   });
 });
 
+router.get("/hospitals/score/:hospital", (req, res) => {
+  const hospital = req.hospital;
+  Review.aggregate([
+    { $match: { hospital: hospital._id } },
+    { $group: { _id: null, averageScore: { $avg: "$overallScore" } } },
+  ]).then((result) => {
+    const averageScore = result[0].averageScore;
+    res.json({ averageScore: averageScore });
+  });
+});
+
 router.get("/reviews/:review", (req, res) => {
   const review = req.review;
   if (!review) {
