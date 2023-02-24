@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 const Review = require("./reviewModel");
 
 const hospitalSchema = new Schema({
-  id: { type: String },
+  hospitalId: { type: String },
   name: { type: String },
   address: { type: String },
   city: { type: String },

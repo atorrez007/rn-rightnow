@@ -1,4 +1,5 @@
 const { json } = require("body-parser");
+const mongoose = require("mongoose");
 const fs = require("fs");
 const router = require("express").Router();
 const Hospital = require("../models/hospitalModel");
@@ -14,7 +15,7 @@ router.get("/load-data", (req, res) => {
     const item = hospitalforDatabase[i];
 
     let hospital = new Hospital({
-      id: item["Facility ID"],
+      hospitalId: item["Facility ID"],
       name: item["Facility Name"],
       address: item.Address,
       city: item.City,
@@ -43,29 +44,60 @@ router.get("/load-data", (req, res) => {
   res.send("Generated!");
 });
 // create hospital id router param
-router.param("hospital", function (req, res, next, ID) {
-  const hospitalArray = Object.values(hospitalObj);
-
-  req.hospitals = hospitalArray;
-
-  req.hospital = req.hospitals.find(
-    (hospital) => hospital["Facility ID"] === ID
-  );
-
-  next();
+router.param("hospital", function (req, res, next, id) {
+  Hospital.findById({ _id: `${id}` }).exec((err, hospital) => {
+    if (err) {
+      return next(err);
+    } else {
+      req.hospital = hospital;
+      next();
+    }
+  });
 });
 
-router.get("/hospitals", (req, res) => {
-  // console.log(hospitalObj.length);
-  res.send(hospitalObj);
+router.get("/hospitals", async (req, res) => {
+  Hospital.find().exec((err, data) => {
+    if (err) {
+      res.status(500).send("Internal Server Error");
+      return;
+    } else {
+      res.send(data);
+    }
+  });
 });
 
 router.get("/hospitals/:hospital", (req, res) => {
-  if (req.hospital) {
-    res.send(req.hospital);
-  } else {
-    res.send("Hospital not found.");
+  const hospital = req.hospital;
+  if (!hospital) {
+    return res.status(404).json("Hospital not found");
   }
+  res.send(hospital);
+});
+
+router.get("/reviews", (req, res) => {
+  Review.find({}).exec((err, reviews) => {
+    if (err) {
+      throw err;
+    }
+    res.send(reviews);
+  });
+});
+
+router.get("/hospitals/:hospital/reviews", (req, res) => {
+  const hospital = req.hospital;
+  if (!hospital) {
+    return res.status(404).json("Hospital not found");
+  }
+  Hospital.find({ _id: req.hospital._id })
+    .populate({
+      path: "reviews",
+    })
+    .exec((err, review) => {
+      if (err) {
+        throw err;
+      }
+      res.send(review);
+    });
 });
 
 module.exports = router;
