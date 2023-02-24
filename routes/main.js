@@ -28,7 +28,18 @@ router.get("/load-data", (req, res) => {
 
     let review = new Review({
       hospital: hospital._id,
+      shift: ["3/12 hour shifts"],
+      specialty: "Medsurg",
+      nurseRatio: "1:4 patients",
       text: "I love this hospital!",
+      chartingSoftware: "Epic",
+      accessibility: "8",
+      dinning: ["on-site cafeteria", "vending machines"],
+      scrubColor: "gray",
+      housing: "Hotel",
+      safety: "7",
+      parking: "Paid/Reimbursed",
+      overallScore: 8,
     });
 
     hospital.reviews.push(review._id);
@@ -55,6 +66,17 @@ router.param("hospital", function (req, res, next, id) {
   });
 });
 
+router.param("review", function (req, res, next, id) {
+  Review.findById({ _id: id }).exec((err, review) => {
+    if (err) {
+      return next(err);
+    } else {
+      req.review = review;
+      next();
+    }
+  });
+});
+
 router.get("/hospitals", async (req, res) => {
   Hospital.find().exec((err, data) => {
     if (err) {
@@ -69,7 +91,7 @@ router.get("/hospitals", async (req, res) => {
 router.get("/hospitals/:hospital", (req, res) => {
   const hospital = req.hospital;
   if (!hospital) {
-    return res.status(404).json("Hospital not found");
+    return res.status(404).json("Hospital not found.");
   }
   res.send(hospital);
 });
@@ -81,6 +103,14 @@ router.get("/reviews", (req, res) => {
     }
     res.send(reviews);
   });
+});
+
+router.get("/reviews/:review", (req, res) => {
+  const review = req.review;
+  if (!review) {
+    return res.status(404).json("Review not found.");
+  }
+  res.send(review);
 });
 
 router.get("/hospitals/:hospital/reviews", (req, res) => {
@@ -98,6 +128,35 @@ router.get("/hospitals/:hospital/reviews", (req, res) => {
       }
       res.send(review);
     });
+});
+
+router.post("/hospitals/:hospital/reviews", (req, res) => {
+  const hospital = req.hospital;
+  if (!hospital) {
+    res.status(404).json("Cannot leave a review. No hospital found.");
+  }
+  const review = new Review(req.body);
+
+  // The link between hospital and review
+  review.hospital = req.hospital._id;
+
+  review.save((err) => {
+    if (err) {
+      throw err;
+    }
+    Hospital.findById({ _id: req.hospital._id }, (err, hospital) => {
+      if (err) {
+        throw err;
+      }
+      hospital.reviews.push(review._id);
+      hospital.save((err) => {
+        if (err) {
+          throw err;
+        }
+        res.json("Review added to Hospital!");
+      });
+    });
+  });
 });
 
 module.exports = router;
