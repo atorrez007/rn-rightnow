@@ -1,5 +1,6 @@
 const { json } = require("body-parser");
 const mongoose = require("mongoose");
+const { auth } = require("express-openid-connect");
 const fs = require("fs");
 const router = require("express").Router();
 const Hospital = require("../models/hospitalModel");
@@ -8,6 +9,15 @@ const User = require("../models/userModel");
 
 const rawHospitalData = fs.readFileSync("test-hospital-data.json", "utf-8");
 const hospitalObj = JSON.parse(rawHospitalData);
+
+const config = {
+  authRequired: false,
+  auth0Logout: true,
+  secret: process.env.SECRET,
+  baseURL: process.env.BASE_URL,
+  clientID: process.env.CLIENT_ID,
+  issuerBaseURL: process.env.ISSUER_BASE_URL,
+};
 
 // create an endpoint to generate data and import into MongoDB via Mongoose.
 router.get("/load-data", (req, res) => {

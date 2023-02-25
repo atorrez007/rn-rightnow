@@ -28,7 +28,7 @@ app.use(
 
 const mainRoutes = require("./routes/main");
 app.use(mainRoutes);
-
-app.listen(8000, () => {
-  console.log("Node.js listening on port " + 8000);
+const port = process.env.PORT || 8000;
+app.listen(port, () => {
+  console.log(`This is port ${port}. I'm listening...`);
 });
