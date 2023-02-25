@@ -1,5 +1,6 @@
 const { json } = require("body-parser");
-const mongoose = require("mongoose");
+const { requiresAuth } = require("express-openid-connect");
+
 const fs = require("fs");
 const router = require("express").Router();
 const Hospital = require("../models/hospitalModel");
@@ -93,6 +94,30 @@ router.param("review", function (req, res, next, id) {
   });
 });
 
+// Authentication route
+
+// router.get("/", (req, res) => {
+//   res.send("Logged out");
+// });
+
+router.get("/", (req, res) => {
+  res.send(
+    req.oidc.isAuthenticated()
+      ? res.redirect("/home")
+      : res.redirect("/prehome")
+  );
+});
+
+router.get("/profile", requiresAuth(), (req, res) => {
+  res.send(JSON.stringify(req.oidc.user));
+});
+
+router.get("/prehome", (req, res) => {
+  res.send("You're here but not logged in.");
+});
+router.get("/home", requiresAuth(), (req, res) => {
+  res.send("Welcome to the homepage!");
+});
 router.get("/hospitals", async (req, res) => {
   Hospital.find().exec((err, data) => {
     if (err) {
@@ -112,7 +137,8 @@ router.get("/hospitals/:hospital", (req, res) => {
   res.send(hospital);
 });
 
-router.get("/reviews", (req, res) => {
+// Not for user-access.
+router.get("/reviews", requiresAuth(), (req, res) => {
   Review.find({}).exec((err, reviews) => {
     if (err) {
       throw err;
@@ -132,7 +158,7 @@ router.get("/hospitals/score/:hospital", (req, res) => {
   });
 });
 
-router.get("/reviews/:review", (req, res) => {
+router.get("/reviews/:review", requiresAuth(), (req, res) => {
   const review = req.review;
   if (!review) {
     return res.status(404).json("Review not found.");
@@ -140,7 +166,7 @@ router.get("/reviews/:review", (req, res) => {
   res.send(review);
 });
 
-router.get("/hospitals/:hospital/reviews", (req, res) => {
+router.get("/hospitals/:hospital/reviews", requiresAuth(), (req, res) => {
   const hospital = req.hospital;
   if (!hospital) {
     return res.status(404).json("Hospital not found");
@@ -185,10 +211,6 @@ router.post("/hospitals/:hospital/reviews", (req, res) => {
       });
     });
   });
-});
-
-router.post("/login", (req, res) => {
-  res.send("Login page here.");
 });
 
 module.exports = router;
