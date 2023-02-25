@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const Hospital = require("./hospitalModel");
+const User = require("./userModel");
 
 const reviewSchema = new Schema({
   hospital: { type: Schema.Types.ObjectId, ref: "Hospital" },
@@ -16,6 +17,7 @@ const reviewSchema = new Schema({
   safety: { type: String },
   parking: { type: String },
   overallScore: { type: Number },
+  user: { type: Schema.Types.ObjectId, ref: "User" },
   date: { type: String, required: true, default: new Date() },
 });
 

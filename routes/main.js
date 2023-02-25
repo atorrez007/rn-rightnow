@@ -4,12 +4,21 @@ const fs = require("fs");
 const router = require("express").Router();
 const Hospital = require("../models/hospitalModel");
 const Review = require("../models/reviewModel");
+const User = require("../models/userModel");
 
 const rawHospitalData = fs.readFileSync("test-hospital-data.json", "utf-8");
 const hospitalObj = JSON.parse(rawHospitalData);
 
 // create an endpoint to generate data and import into MongoDB via Mongoose.
 router.get("/load-data", (req, res) => {
+  let user = new User({
+    userName: "JohnnyAppleseed1",
+    email: "JohnnyApple@gmail.com",
+    reviews: [],
+  });
+  user.save((err) => {
+    if (err) throw err;
+  });
   const hospitalforDatabase = Object.values(hospitalObj);
   for (let i = 0; i < hospitalforDatabase.length; i++) {
     const item = hospitalforDatabase[i];
@@ -40,9 +49,16 @@ router.get("/load-data", (req, res) => {
       safety: "7",
       parking: "Paid/Reimbursed",
       overallScore: 8,
+      user: "",
     });
 
+    // reference in the hospital.reviews
     hospital.reviews.push(review._id);
+
+    // reference the review in the user.reviews array.
+    user.reviews.push(review._id);
+    // referencing the user in the reviews object.
+    review.user = user._id;
 
     review.save((err) => {
       if (err) throw err;
@@ -160,6 +176,7 @@ router.post("/hospitals/:hospital/reviews", (req, res) => {
         throw err;
       }
       hospital.reviews.push(review._id);
+
       hospital.save((err) => {
         if (err) {
           throw err;
@@ -168,6 +185,10 @@ router.post("/hospitals/:hospital/reviews", (req, res) => {
       });
     });
   });
+});
+
+router.post("/login", (req, res) => {
+  res.send("Login page here.");
 });
 
 module.exports = router;
