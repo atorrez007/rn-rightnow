@@ -104,6 +104,10 @@ router.get("/hospitals", async (req, res) => {
   });
 });
 
+router.get("/home", (req, res) => {
+  res.send("Home");
+});
+
 router.get("/hospitals/:hospital", (req, res) => {
   const hospital = req.hospital;
   if (!hospital) {
