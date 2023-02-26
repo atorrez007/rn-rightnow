@@ -1,5 +1,3 @@
-const { json } = require("body-parser");
-const mongoose = require("mongoose");
 const { auth, requiresAuth } = require("express-openid-connect");
 const fs = require("fs");
 const router = require("express").Router();
@@ -71,6 +69,31 @@ router.get("/load-data", (req, res) => {
   }
   res.send("Generated!");
 });
+
+const checkUser = async (req, res, next) => {
+  if (req.oidc.user) {
+    const { sub } = req.oidc.user;
+    const user = await User.findOne({ auth0Id: sub });
+    if (user) {
+      req.user = user;
+      next();
+    } else {
+      const { name, email } = req.oidc.user;
+      const newUser = new User({
+        auth0Id: sub,
+        userName: name,
+        email: email,
+        reviews: [],
+      });
+      await newUser.save();
+      req.user = newUser;
+      next();
+    }
+  } else {
+    res.status(401).json({ message: "Unauthorized." });
+  }
+};
+
 // create hospital id router param
 router.param("hospital", function (req, res, next, id) {
   Hospital.findById({ _id: `${id}` }).exec((err, hospital) => {
@@ -81,10 +104,6 @@ router.param("hospital", function (req, res, next, id) {
       next();
     }
   });
-});
-
-router.get("/callback", (req, res) => {
-  res.send("Callback");
 });
 
 router.param("review", function (req, res, next, id) {
@@ -98,26 +117,10 @@ router.param("review", function (req, res, next, id) {
   });
 });
 
-router.get("/", async (req, res) => {
+router.get("/", requiresAuth(), checkUser, async (req, res) => {
   //Auth0 redirects to this callback for now.
-  if (req.oidc.user) {
-    const { sub, name, email } = req.oidc.user;
-    const user = await User.findOne({ auth0Id: sub });
-    if (!user) {
-      const newUser = new User({
-        auth0Id: sub,
-        userName: name,
-        email: email,
-        reviews: [],
-      });
-      await newUser.save();
-      res.redirect("/home");
-    } else {
-      res.send("User already exists in the system");
-    }
-  } else {
-    res.redirect("/login");
-  }
+
+  res.send("Welcome to RN-RightNow");
 });
 
 router.get("/hospitals", async (req, res) => {
@@ -131,16 +134,12 @@ router.get("/hospitals", async (req, res) => {
   });
 });
 
-router.get("/profile", (req, res) => {
+router.get("/profile", requiresAuth(), checkUser, (req, res) => {
   res.send(JSON.stringify(req.oidc.user));
 });
 
-router.get("/prehome", (req, res) => {
-  res.send("You're here but not logged in.");
-});
-
 router.get("/home", requiresAuth(), (req, res) => {
-  res.send("Home");
+  res.render("home", { message: "Hello" });
 });
 
 router.get("/hospitals/:hospital", (req, res) => {
@@ -151,11 +150,12 @@ router.get("/hospitals/:hospital", (req, res) => {
   res.send(hospital);
 });
 
-router.get("/reviews", requiresAuth(), (req, res) => {
+router.get("/reviews", requiresAuth(), checkUser, (req, res) => {
   Review.find({}).exec((err, reviews) => {
     if (err) {
       throw err;
     }
+    console.log(req.user);
     res.send(reviews);
   });
 });

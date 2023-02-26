@@ -6,6 +6,8 @@ const { auth } = require("express-openid-connect");
 
 const app = express();
 
+app.set("view engine", "ejs");
+
 mongoose.connect("mongodb://localhost/rn-data", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -41,6 +43,7 @@ app.use(
 
 const mainRoutes = require("./routes/main");
 app.use(mainRoutes);
+
 const port = process.env.PORT || 8000;
 app.listen(port, () => {
   console.log(`This is port ${port}. I'm listening...`);
