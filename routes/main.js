@@ -1,6 +1,6 @@
 const { json } = require("body-parser");
 const mongoose = require("mongoose");
-const { auth } = require("express-openid-connect");
+const { auth, requiresAuth } = require("express-openid-connect");
 const fs = require("fs");
 const router = require("express").Router();
 const Hospital = require("../models/hospitalModel");
@@ -9,15 +9,6 @@ const User = require("../models/userModel");
 
 const rawHospitalData = fs.readFileSync("test-hospital-data.json", "utf-8");
 const hospitalObj = JSON.parse(rawHospitalData);
-
-const config = {
-  authRequired: false,
-  auth0Logout: true,
-  secret: process.env.SECRET,
-  baseURL: process.env.BASE_URL,
-  clientID: process.env.CLIENT_ID,
-  issuerBaseURL: process.env.ISSUER_BASE_URL,
-};
 
 // create an endpoint to generate data and import into MongoDB via Mongoose.
 router.get("/load-data", (req, res) => {
@@ -103,6 +94,14 @@ router.param("review", function (req, res, next, id) {
   });
 });
 
+router.get("/", (req, res) => {
+  res.send(
+    req.oidc.isAuthenticated()
+      ? res.redirect("/home")
+      : res.redirect("/prehome")
+  );
+});
+
 router.get("/hospitals", async (req, res) => {
   Hospital.find().exec((err, data) => {
     if (err) {
@@ -114,7 +113,11 @@ router.get("/hospitals", async (req, res) => {
   });
 });
 
-router.get("/home", (req, res) => {
+router.get("/prehome", (req, res) => {
+  res.send("You're here but not logged in.");
+});
+
+router.get("/home", requiresAuth(), (req, res) => {
   res.send("Home");
 });
 
@@ -126,7 +129,7 @@ router.get("/hospitals/:hospital", (req, res) => {
   res.send(hospital);
 });
 
-router.get("/reviews", (req, res) => {
+router.get("/reviews", requiresAuth(), (req, res) => {
   Review.find({}).exec((err, reviews) => {
     if (err) {
       throw err;
@@ -201,8 +204,8 @@ router.post("/hospitals/:hospital/reviews", (req, res) => {
   });
 });
 
-router.post("/login", (req, res) => {
-  res.send("Login page here.");
-});
+// router.post("/login", (req, res) => {
+//   res.send("Login page here.");
+// });
 
 module.exports = router;

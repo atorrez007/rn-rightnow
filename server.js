@@ -1,6 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+require("dotenv").config();
+const { auth } = require("express-openid-connect");
 
 const app = express();
 
@@ -8,6 +10,17 @@ mongoose.connect("mongodb://localhost/rn-data", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
+
+const config = {
+  authRequired: false,
+  auth0Logout: true,
+  secret: process.env.SECRET,
+  baseURL: process.env.BASE_URL,
+  clientID: process.env.CLIENT_ID,
+  issuerBaseURL: process.env.ISSUER_BASE_URL,
+};
+
+app.use(auth(config));
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
