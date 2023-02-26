@@ -83,6 +83,10 @@ router.param("hospital", function (req, res, next, id) {
   });
 });
 
+router.get("/callback", (req, res) => {
+  res.send("Callback");
+});
+
 router.param("review", function (req, res, next, id) {
   Review.findById({ _id: id }).exec((err, review) => {
     if (err) {
@@ -94,12 +98,26 @@ router.param("review", function (req, res, next, id) {
   });
 });
 
-router.get("/", (req, res) => {
-  res.send(
-    req.oidc.isAuthenticated()
-      ? res.redirect("/home")
-      : res.redirect("/prehome")
-  );
+router.get("/", async (req, res) => {
+  //Auth0 redirects to this callback for now.
+  if (req.oidc.user) {
+    const { sub, name, email } = req.oidc.user;
+    const user = await User.findOne({ auth0Id: sub });
+    if (!user) {
+      const newUser = new User({
+        auth0Id: sub,
+        userName: name,
+        email: email,
+        reviews: [],
+      });
+      await newUser.save();
+      res.redirect("/home");
+    } else {
+      res.send("User already exists in the system");
+    }
+  } else {
+    res.redirect("/login");
+  }
 });
 
 router.get("/hospitals", async (req, res) => {
@@ -111,6 +129,10 @@ router.get("/hospitals", async (req, res) => {
       res.send(data);
     }
   });
+});
+
+router.get("/profile", (req, res) => {
+  res.send(JSON.stringify(req.oidc.user));
 });
 
 router.get("/prehome", (req, res) => {
@@ -157,7 +179,7 @@ router.get("/reviews/:review", (req, res) => {
   res.send(review);
 });
 
-router.get("/hospitals/:hospital/reviews", (req, res) => {
+router.get("/hospitals/:hospital/reviews", requiresAuth(), (req, res) => {
   const hospital = req.hospital;
   if (!hospital) {
     return res.status(404).json("Hospital not found");
@@ -174,7 +196,7 @@ router.get("/hospitals/:hospital/reviews", (req, res) => {
     });
 });
 
-router.post("/hospitals/:hospital/reviews", (req, res) => {
+router.post("/hospitals/:hospital/reviews", requiresAuth(), (req, res) => {
   const hospital = req.hospital;
   if (!hospital) {
     res.status(404).json("Cannot leave a review. No hospital found.");
@@ -203,9 +225,5 @@ router.post("/hospitals/:hospital/reviews", (req, res) => {
     });
   });
 });
-
-// router.post("/login", (req, res) => {
-//   res.send("Login page here.");
-// });
 
 module.exports = router;
