@@ -117,10 +117,12 @@ router.param("review", function (req, res, next, id) {
   });
 });
 
-router.get("/", requiresAuth(), checkUser, async (req, res) => {
-  //Auth0 redirects to this callback for now.
-
-  res.send("Welcome to RN-RightNow");
+router.get("/", async (req, res) => {
+  res.render("index", {
+    title: "Express Demo",
+    isAuthenticated: req.oidc.isAuthenticated(),
+    user: req.oidc.user,
+  });
 });
 
 router.get("/hospitals", async (req, res) => {
@@ -138,8 +140,8 @@ router.get("/profile", requiresAuth(), checkUser, (req, res) => {
   res.send(JSON.stringify(req.oidc.user));
 });
 
-router.get("/home", requiresAuth(), (req, res) => {
-  res.render("home", { message: "Hello" });
+router.get("/hello", (req, res) => {
+  res.send("hello");
 });
 
 router.get("/hospitals/:hospital", (req, res) => {
@@ -155,7 +157,7 @@ router.get("/reviews", requiresAuth(), checkUser, (req, res) => {
     if (err) {
       throw err;
     }
-    console.log(req.user);
+    // console.log(req.user);
     res.send(reviews);
   });
 });
@@ -171,7 +173,7 @@ router.get("/hospitals/score/:hospital", (req, res) => {
   });
 });
 
-router.get("/reviews/:review", (req, res) => {
+router.get("/reviews/:review", requiresAuth(), (req, res) => {
   const review = req.review;
   if (!review) {
     return res.status(404).json("Review not found.");
