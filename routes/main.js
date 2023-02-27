@@ -90,7 +90,7 @@ const checkUser = async (req, res, next) => {
       next();
     }
   } else {
-    res.status(401).json({ message: "Unauthorized." });
+    res.redirect("/login");
   }
 };
 
@@ -125,6 +125,10 @@ router.get("/", async (req, res) => {
   });
 });
 
+router.get("/home", (req, res) => {
+  res.send("Homepage. You should be redirected here when you logout.");
+});
+
 router.get("/hospitals", async (req, res) => {
   Hospital.find().exec((err, data) => {
     if (err) {
@@ -138,10 +142,6 @@ router.get("/hospitals", async (req, res) => {
 
 router.get("/profile", requiresAuth(), checkUser, (req, res) => {
   res.send(JSON.stringify(req.oidc.user));
-});
-
-router.get("/hello", (req, res) => {
-  res.send("hello");
 });
 
 router.get("/hospitals/:hospital", (req, res) => {
@@ -198,8 +198,10 @@ router.get("/hospitals/:hospital/reviews", requiresAuth(), (req, res) => {
     });
 });
 
-router.post("/hospitals/:hospital/reviews", requiresAuth(), (req, res) => {
+// Will be protected and checked for user in db.
+router.post("/hospitals/:hospital/reviews", (req, res) => {
   const hospital = req.hospital;
+  console.log(req.user);
   if (!hospital) {
     res.status(404).json("Cannot leave a review. No hospital found.");
   }
@@ -226,6 +228,19 @@ router.post("/hospitals/:hospital/reviews", requiresAuth(), (req, res) => {
       });
     });
   });
+});
+
+// Admin endpoints. Requires privelege.
+router.get("/users", (req, res) => {
+  User.find({}).exec((err, users) => {
+    if (err) throw err;
+    else {
+      res.send(users);
+    }
+  });
+});
+router.delete("/reviews/:review", (req, res) => {
+  res.send("this endpoint would delete a specific hospital review.");
 });
 
 module.exports = router;
