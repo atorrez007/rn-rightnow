@@ -231,6 +231,17 @@ router.post("/hospitals/:hospital/reviews", (req, res) => {
 });
 
 // Admin endpoints. Requires privelege.
+router.param("user", function (req, res, next, id) {
+  User.findById({ _id: `${id}` }).exec((err, user) => {
+    if (err) {
+      return next(err);
+    } else {
+      req.user = user;
+      next();
+    }
+  });
+});
+
 router.get("/users", (req, res) => {
   User.find({}).exec((err, users) => {
     if (err) throw err;
@@ -239,6 +250,15 @@ router.get("/users", (req, res) => {
     }
   });
 });
+
+router.get("/users/:user", (req, res) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(404).json("User not found.");
+  }
+  res.send(user);
+});
+
 router.delete("/reviews/:review", (req, res) => {
   res.send("this endpoint would delete a specific hospital review.");
 });
