@@ -70,6 +70,7 @@ router.get("/load-data", (req, res) => {
   res.send("Generated!");
 });
 
+// middleware
 const checkUser = async (req, res, next) => {
   if (req.oidc.user) {
     const { sub } = req.oidc.user;
@@ -90,7 +91,31 @@ const checkUser = async (req, res, next) => {
       next();
     }
   } else {
-    res.redirect("/login");
+    res.redirect("/home");
+  }
+};
+
+// bare function
+const checkUserFunc = async (req, res) => {
+  if (req.oidc.user) {
+    const { sub } = req.oidc.user;
+    const user = await User.findOne({ auth0Id: sub });
+    if (user) {
+      req.user = user;
+    } else {
+      const { name, email } = req.oidc.user;
+      const newUser = new User({
+        auth0Id: sub,
+        userName: name,
+        email: email,
+        reviews: [],
+      });
+      await newUser.save();
+      req.user = newUser;
+    }
+  } else {
+    res.redirect("/");
+    // will want to redirect to login if no profile found.
   }
 };
 
@@ -144,7 +169,7 @@ router.get("/hospitals", async (req, res) => {
   });
 });
 
-router.get("/profile", requiresAuth(), checkUser, (req, res) => {
+router.get("/profile", (req, res) => {
   res.send(req.oidc.user);
 });
 
@@ -156,14 +181,19 @@ router.get("/hospitals/:hospital", (req, res) => {
   res.send(hospital);
 });
 
-router.get("/reviews", requiresAuth(), checkUser, (req, res) => {
-  Review.find({}).exec((err, reviews) => {
-    if (err) {
-      throw err;
+router.get("/reviews", async (req, res) => {
+  try {
+    await checkUserFunc(req);
+    try {
+      const reviews = await Review.find({}).exec();
+      res.send(reviews);
+    } catch (err) {
+      console.log(err);
+      res.status(500).send("error retrieving reviews");
     }
-    // console.log(req.user);
-    res.send(reviews);
-  });
+  } catch (err) {
+    res.redirect("/");
+  }
 });
 
 router.get("/hospitals/score/:hospital", (req, res) => {
