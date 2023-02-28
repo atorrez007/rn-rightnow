@@ -1,4 +1,27 @@
 body {
   font-family: sans-serif;
-  border: 1px red solid;
+  border: 1px black solid;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  width: 50%;
+  height: 100%;
+}
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 20px;
+}
+
+.options-div {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.accessibility {
 }

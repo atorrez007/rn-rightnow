@@ -125,6 +125,10 @@ router.get("/", async (req, res) => {
   });
 });
 
+router.get("/post-review", async (req, res) => {
+  res.render("review");
+});
+
 router.get("/home", (req, res) => {
   res.send("Homepage. You should be redirected here when you logout.");
 });
@@ -141,7 +145,7 @@ router.get("/hospitals", async (req, res) => {
 });
 
 router.get("/profile", requiresAuth(), checkUser, (req, res) => {
-  res.send(JSON.stringify(req.oidc.user));
+  res.send(req.oidc.user);
 });
 
 router.get("/hospitals/:hospital", (req, res) => {
