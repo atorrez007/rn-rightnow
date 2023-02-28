@@ -91,7 +91,7 @@ const checkUser = async (req, res, next) => {
       next();
     }
   } else {
-    res.redirect("/home");
+    res.redirect("/");
   }
 };
 
@@ -169,8 +169,14 @@ router.get("/hospitals", async (req, res) => {
   });
 });
 
-router.get("/profile", (req, res) => {
-  res.send(req.oidc.user);
+router.get("/profile", requiresAuth(), async (req, res) => {
+  try {
+    await checkUserFunc(req);
+    res.send(req.oidc.user);
+  } catch (err) {
+    res.status(500).send("Internal Server Error");
+    console.log(err);
+  }
 });
 
 router.get("/hospitals/:hospital", (req, res) => {
@@ -181,7 +187,7 @@ router.get("/hospitals/:hospital", (req, res) => {
   res.send(hospital);
 });
 
-router.get("/reviews", async (req, res) => {
+router.get("/reviews", requiresAuth(), async (req, res) => {
   try {
     await checkUserFunc(req);
     try {
