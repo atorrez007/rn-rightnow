@@ -4,12 +4,20 @@ const router = require("express").Router();
 const Hospital = require("../models/hospitalModel");
 const Review = require("../models/reviewModel");
 const User = require("../models/userModel");
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 const rawHospitalData = fs.readFileSync("test-hospital-data.json", "utf-8");
 const hospitalObj = JSON.parse(rawHospitalData);
 
 // Query endpoint for CMS Hospital List found.
 // Raw data has been saved to hospital-data-query.json
+
+router.get("/api", (req, res) => {
+  fetch(process.env.CMS_API)
+    .then((res) => res.json())
+    .then((data) => res.send(data.results));
+});
 
 // create an endpoint to generate data and import into MongoDB via Mongoose.
 router.get("/load-data", (req, res) => {
