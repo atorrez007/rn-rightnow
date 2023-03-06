@@ -121,7 +121,7 @@ const checkUserFunc = async (req, res) => {
 
 // create hospital id router param
 router.param("hospital", function (req, res, next, id) {
-  Hospital.findById({ _id: `${id}` }).exec((err, hospital) => {
+  Hospital.findOne({ hospitalId: `${id}` }).exec((err, hospital) => {
     if (err) {
       return next(err);
     } else {
