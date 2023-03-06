@@ -1,4 +1,5 @@
 node_modules/*
 hospital-data.json
 test-hospital-data.json
+hospital-data-query.json
 .env

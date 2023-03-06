@@ -8,6 +8,9 @@ const User = require("../models/userModel");
 const rawHospitalData = fs.readFileSync("test-hospital-data.json", "utf-8");
 const hospitalObj = JSON.parse(rawHospitalData);
 
+// Query endpoint for CMS Hospital List found.
+// Raw data has been saved to hospital-data-query.json
+
 // create an endpoint to generate data and import into MongoDB via Mongoose.
 router.get("/load-data", (req, res) => {
   let user = new User({
@@ -202,6 +205,7 @@ router.get("/reviews", requiresAuth(), async (req, res) => {
   }
 });
 
+// Change overall score to 5 and possibly update the hospital schema to either pull the overall score directly or reference the review schema.
 router.get("/hospitals/score/:hospital", (req, res) => {
   const hospital = req.hospital;
   Review.aggregate([
