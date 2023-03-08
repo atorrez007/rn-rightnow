@@ -20,7 +20,7 @@ router.get("/api", (req, res) => {
 });
 
 // create an endpoint to generate data and import into MongoDB via Mongoose.
-router.get("/load-data", (req, res) => {
+router.get("/load-data", async (req, res) => {
   let user = new User({
     userName: "JohnnyAppleseed1",
     email: "JohnnyApple@gmail.com",
@@ -32,6 +32,14 @@ router.get("/load-data", (req, res) => {
   const hospitalforDatabase = Object.values(hospitalObj);
   for (let i = 0; i < hospitalforDatabase.length; i++) {
     const item = hospitalforDatabase[i];
+
+    const existingHospital = await Hospital.findOne({
+      hospitalId: item["Facility ID"],
+    });
+
+    if (existingHospital) {
+      continue;
+    }
 
     let hospital = new Hospital({
       hospitalId: item["Facility ID"],
@@ -225,15 +233,16 @@ router.get("/hospitals/score/:hospital", (req, res) => {
   });
 });
 
-router.get("/reviews/:review", requiresAuth(), (req, res) => {
+// requiresAuth removed for testing on front end.
+router.get("/reviews/:review", (req, res) => {
   const review = req.review;
   if (!review) {
     return res.status(404).json("Review not found.");
   }
   res.send(review);
 });
-
-router.get("/hospitals/:hospital/reviews", requiresAuth(), (req, res) => {
+// requiresAuth removed for testing on front end.
+router.get("/hospitals/:hospital/reviews", (req, res) => {
   const hospital = req.hospital;
   if (!hospital) {
     return res.status(404).json("Hospital not found");
@@ -253,7 +262,7 @@ router.get("/hospitals/:hospital/reviews", requiresAuth(), (req, res) => {
 // Will be protected and checked for user in db.
 router.post("/hospitals/:hospital/reviews", (req, res) => {
   const hospital = req.hospital;
-  console.log(req.user);
+  // console.log(req.user);
   if (!hospital) {
     res.status(404).json("Cannot leave a review. No hospital found.");
   }
