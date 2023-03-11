@@ -235,7 +235,7 @@ router.param("hospital", function (req, res, next, id) {
 });
 
 router.param("review", function (req, res, next, id) {
-  Review.findById({ _id: id }).exec((err, review) => {
+  Review.findById({ _id: `${id}` }).exec((err, review) => {
     if (err) {
       return next(err);
     } else {
