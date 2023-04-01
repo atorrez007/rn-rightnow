@@ -265,13 +265,23 @@ router.get("/hospitals", async (req, res) => {
   const perPage = 12;
   const page = req.query.page ? parseInt(req.query.page) : 1;
   const state = req.query.state || "";
-  const allHospitals = req.query.allHospitals ? true : false;
+  const allHospitals =
+    req.query.allHospitals && req.query.allHospitals === "true";
 
   // This criteria will be used to filter through MongoDB's Hospital.countDocuments method.
   let filterCriteria = {
     state: state,
   };
-  if (!allHospitals) {
+  if (allHospitals) {
+    Hospital.find().exec((err, data) => {
+      if (err) {
+        res.status(500).send("Internal Server Error");
+        return;
+      } else {
+        res.send(data);
+      }
+    });
+  } else {
     Hospital.find(filterCriteria)
       .skip((page - 1) * perPage)
       .limit(perPage)
@@ -283,15 +293,6 @@ router.get("/hospitals", async (req, res) => {
           res.send(data);
         }
       });
-  } else {
-    Hospital.find().exec((err, data) => {
-      if (err) {
-        res.status(500).send("Internal Server Error");
-        return;
-      } else {
-        res.send(data);
-      }
-    });
   }
 });
 
