@@ -264,7 +264,7 @@ router.get("/home", (req, res) => {
 router.get("/hospitals", async (req, res) => {
   const perPage = 12;
   const page = req.query.page ? parseInt(req.query.page) : 1;
-  const state = req.query.state || "";
+  const state = req.query.state || "AK";
   const allHospitals =
     req.query.allHospitals && req.query.allHospitals === "true";
 
@@ -273,26 +273,38 @@ router.get("/hospitals", async (req, res) => {
     state: state,
   };
   if (allHospitals) {
-    Hospital.find().exec((err, data) => {
+    Hospital.countDocuments().exec((err, count) => {
       if (err) {
-        res.status(500).send("Internal Server Error");
-        return;
+        res.status(400).send(err);
       } else {
-        res.send(data);
+        Hospital.find().exec((err, data) => {
+          if (err) {
+            res.status(500).send("Internal Server Error");
+            return;
+          } else {
+            res.send({ data, count });
+          }
+        });
       }
     });
   } else {
-    Hospital.find(filterCriteria)
-      .skip((page - 1) * perPage)
-      .limit(perPage)
-      .exec((err, data) => {
-        if (err) {
-          res.status(500).send("Internal Server Error");
-          return;
-        } else {
-          res.send(data);
-        }
-      });
+    Hospital.countDocuments(filterCriteria).exec((err, count) => {
+      if (err) {
+        res.send(err);
+      } else {
+        Hospital.find(filterCriteria)
+          .skip((page - 1) * perPage)
+          .limit(perPage)
+          .exec((err, data) => {
+            if (err) {
+              res.status(500).send("Internal Server Error");
+              return;
+            } else {
+              res.status(200).send({ data, count });
+            }
+          });
+      }
+    });
   }
 });
 
