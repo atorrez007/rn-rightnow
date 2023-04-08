@@ -264,14 +264,28 @@ router.get("/home", (req, res) => {
 router.get("/hospitals", async (req, res) => {
   const perPage = 12;
   const page = req.query.page ? parseInt(req.query.page) : 1;
-  const state = req.query.state || "AK";
+  const state = req.query.state || "";
+  const city = req.query.city || "";
   const allHospitals =
     req.query.allHospitals && req.query.allHospitals === "true";
 
-  // This criteria will be used to filter through MongoDB's Hospital.countDocuments method.
-  let filterCriteria = {
-    state: state,
-  };
+  // This filter criteria will be used to filter through MongoDB's Hospital.countDocuments method.
+  let filterCriteria = {};
+
+  if (state && city) {
+    filterCriteria = {
+      state: state,
+      city: city,
+    };
+  } else {
+    filterCriteria = {
+      state: state,
+    };
+  }
+
+  // This sort criteria will be used to sort the hospitals in each city and state according to rating.
+  let sortCriteria = {};
+
   if (allHospitals) {
     Hospital.countDocuments().exec((err, count) => {
       if (err) {
