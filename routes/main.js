@@ -262,14 +262,23 @@ router.get("/home", (req, res) => {
 });
 
 router.get("/hospitals", async (req, res) => {
+  const capitalize = (string) => {
+    if (string) {
+      string = string.toUpperCase();
+      return string;
+    }
+  };
   const perPage = 12;
   const page = req.query.page ? parseInt(req.query.page) : 1;
   const state = req.query.state || "";
   const city = req.query.city || "";
+  const query = req.query.query;
+
+  const search = capitalize(query);
+
   const allHospitals =
     req.query.allHospitals && req.query.allHospitals === "true";
 
-  // This filter criteria will be used to filter through MongoDB's Hospital.countDocuments method.
   let filterCriteria = {};
 
   if (state && city) {
@@ -277,12 +286,26 @@ router.get("/hospitals", async (req, res) => {
       state: state,
       city: city,
     };
+  } else if (state && city && search) {
+    filterCriteria = {
+      state: state,
+      city: city,
+      name: { $regex: search, $options: "i" },
+    };
+  } else if (state && search) {
+    filterCriteria = {
+      state: state,
+      name: { $regex: search, $options: "i" },
+    };
+  } else if (search) {
+    filterCriteria = {
+      name: { $regex: search, $options: "i" },
+    };
   } else {
     filterCriteria = {
       state: state,
     };
   }
-
   // This sort criteria will be used to sort the hospitals in each city and state according to rating.
   let sortCriteria = {};
 
