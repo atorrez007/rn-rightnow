@@ -274,38 +274,67 @@ router.get("/hospitals", async (req, res) => {
   const city = req.query.city || "";
   const query = req.query.query;
 
-  const search = capitalize(query);
+  // const search = capitalize(query);
 
   const allHospitals =
     req.query.allHospitals && req.query.allHospitals === "true";
 
-  let filterCriteria = {};
+  const createFilterCriteria = (state, city, query) => {
+    const filterCriteria = {};
+    if (state) {
+      filterCriteria.state = state;
+    }
+    if (state && city) {
+      filterCriteria.state = state;
+      filterCriteria.city = city;
+    }
 
-  if (state && city) {
-    filterCriteria = {
-      state: state,
-      city: city,
-    };
-  } else if (state && city && search) {
-    filterCriteria = {
-      state: state,
-      city: city,
-      name: { $regex: search, $options: "i" },
-    };
-  } else if (state && search) {
-    filterCriteria = {
-      state: state,
-      name: { $regex: search, $options: "i" },
-    };
-  } else if (search) {
-    filterCriteria = {
-      name: { $regex: search, $options: "i" },
-    };
-  } else {
-    filterCriteria = {
-      state: state,
-    };
-  }
+    if (state && city && query) {
+      const search = query.toUpperCase();
+      filterCriteria.state = state;
+      filterCriteria.city = city;
+      filterCriteria.name = { $regex: search, $options: "i" };
+    }
+
+    if (query) {
+      const search = query.toUpperCase();
+      filterCriteria.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { city: { $regex: search, $options: "i" } },
+      ];
+    }
+    return filterCriteria;
+  };
+
+  // let filterCriteria = {};
+
+  const filterCriteria = createFilterCriteria(state, city, query);
+
+  // if (state && city) {
+  //   filterCriteria = {
+  //     state: state,
+  //     city: city,
+  //   };
+  // } else if (state && city && search) {
+  //   filterCriteria = {
+  //     state: state,
+  //     city: city,
+  //     name: { $regex: search, $options: "i" },
+  //   };
+  // } else if (state && search) {
+  //   filterCriteria = {
+  //     state: state,
+  //     name: { $regex: search, $options: "i" },
+  //   };
+  // } else if (search) {
+  //   filterCriteria = {
+  //     name: { $regex: search, $options: "i" },
+  //   };
+  // } else {
+  //   filterCriteria = {
+  //     state: state,
+  //   };
+  // }
   // This sort criteria will be used to sort the hospitals in each city and state according to rating.
   let sortCriteria = {};
 
