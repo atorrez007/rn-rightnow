@@ -1,4 +1,4 @@
-const { auth, requiresAuth } = require("express-openid-connect");
+// const { auth, requiresAuth } = require("express-openid-connect");
 const fs = require("fs");
 const router = require("express").Router();
 const Hospital = require("../models/hospitalModel");
@@ -253,6 +253,10 @@ router.get("/", async (req, res) => {
   });
 });
 
+router.get("/gethospitals", (req, res) => {
+  res.send({ message: "Get Hospitals called." });
+});
+
 router.get("/post-review", async (req, res) => {
   res.render("review");
 });
@@ -374,7 +378,7 @@ router.get("/hospitals", async (req, res) => {
   }
 });
 
-router.get("/profile", requiresAuth(), async (req, res) => {
+router.get("/profile", async (req, res) => {
   try {
     await checkUserFunc(req);
     res.send(req.oidc.user);
@@ -392,7 +396,7 @@ router.get("/hospitals/:hospital", (req, res) => {
   res.send(hospital);
 });
 
-router.get("/reviews", requiresAuth(), async (req, res) => {
+router.get("/reviews", async (req, res) => {
   try {
     await checkUserFunc(req);
     try {
