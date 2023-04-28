@@ -2,10 +2,19 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const { expressjwt: jwt } = require("express-jwt");
+
 const jwks = require("jwks-rsa");
 const axios = require("axios");
+const unprotected = [
+  "/home",
+  "/testing",
+  "/hospitals",
+  // "/hospitals/:hospital",
+  // "/reviews",
+  // "/hospitals/:hospital/reviews",
+  // "/search/:hospitalId",
+];
 require("dotenv").config();
-// const { auth } = require("express-oauth2-jwt-bearer");
 
 const app = express();
 
@@ -30,21 +39,21 @@ mongoose.connect("mongodb://localhost/rn-data", {
   useUnifiedTopology: true,
 });
 
-const jwtCheck = jwt({
-  secret: jwks.expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 5,
-    jwksUri: "https://dev-rbgs3itcq1lp4l2d.us.auth0.com/.well-known/jwks.json",
-  }),
-  algorithms: ["RS256"],
-  audience: "RN site identifier ",
-  issuer: "https://dev-rbgs3itcq1lp4l2d.us.auth0.com/",
-  tokenSigningAlg: ["RS256"],
-});
+// const jwtCheck = jwt({
+//   secret: jwks.expressJwtSecret({
+//     cache: true,
+//     rateLimit: true,
+//     jwksRequestsPerMinute: 5,
+//     jwksUri: "https://dev-rbgs3itcq1lp4l2d.us.auth0.com/.well-known/jwks.json",
+//   }),
+//   algorithms: ["RS256"],
+//   audience: "RN site identifier ",
+//   issuer: "https://dev-rbgs3itcq1lp4l2d.us.auth0.com/",
+//   tokenSigningAlg: ["RS256"],
+// }).unless({ path: unprotected });
 
 // enforce on all endpoints
-app.use(jwtCheck);
+// app.use(jwtCheck);
 
 app.use(bodyParser.json());
 app.use(

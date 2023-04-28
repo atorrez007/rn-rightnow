@@ -1,6 +1,7 @@
 // const { auth, requiresAuth } = require("express-openid-connect");
 const fs = require("fs");
 const router = require("express").Router();
+
 const Hospital = require("../models/hospitalModel");
 const Review = require("../models/reviewModel");
 const User = require("../models/userModel");
@@ -262,7 +263,7 @@ router.get("/post-review", async (req, res) => {
 });
 
 router.get("/home", (req, res) => {
-  res.send("Homepage. You should be redirected here when you logout.");
+  res.send({ message: "This is home!" });
 });
 
 router.get("/hospitals", async (req, res) => {
@@ -421,6 +422,10 @@ router.get("/hospitals/score/:hospital", (req, res) => {
     const averageScore = result[0].averageScore;
     res.json({ averageScore: averageScore });
   });
+});
+
+router.get("/new", (req, res) => {
+  res.send({ message: "new endpoint for auth check." });
 });
 
 // requiresAuth removed for testing on front end.
