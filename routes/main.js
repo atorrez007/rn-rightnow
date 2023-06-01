@@ -498,6 +498,34 @@ router.param("user", function (req, res, next, id) {
   });
 });
 
+// verify database existence or create entry
+router.post("/signup", async (req, res) => {
+  const { auth0sub, nickname, email } = req.body;
+  try {
+    let user = await User.findOne({
+      auth0sub,
+    });
+    if (user) {
+      return res.send("Welcome back, User.");
+    } else {
+      user = new User({
+        auth0sub: auth0sub,
+        nickname: nickname,
+        email: email,
+        reviews: [],
+      });
+      user.save((err) => {
+        if (err) {
+          throw err;
+        }
+      });
+      console.log(`User saved into db ${user}`);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 router.get("/users", (req, res) => {
   User.find({}).exec((err, users) => {
     if (err) throw err;
