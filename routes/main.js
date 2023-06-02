@@ -455,13 +455,16 @@ router.get("/hospitals/:hospital/reviews", (req, res) => {
 });
 
 // Will be protected and checked for user in db.
+// Add review to users reviews
 router.post("/hospitals/:hospital/reviews", (req, res) => {
   const hospital = req.hospital;
+  const user = req.body.user.sub;
+
   // console.log(req.user);
   if (!hospital) {
     res.status(404).json("Cannot leave a review. No hospital found.");
   }
-  const review = new Review(req.body);
+  const review = new Review(req.body.values);
 
   // The link between hospital and review
   review.hospital = req.hospital._id;
@@ -488,7 +491,8 @@ router.post("/hospitals/:hospital/reviews", (req, res) => {
 
 // Admin endpoints. Requires privelege.
 router.param("user", function (req, res, next, id) {
-  User.findById({ _id: `${id}` }).exec((err, user) => {
+  const auth0sub = id;
+  User.findOne({ auth0sub }).exec((err, user) => {
     if (err) {
       return next(err);
     } else {
