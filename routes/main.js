@@ -456,18 +456,34 @@ router.get("/hospitals/:hospital/reviews", (req, res) => {
 
 // Will be protected and checked for user in db.
 // Add review to users reviews
-router.post("/hospitals/:hospital/reviews", (req, res) => {
+router.post("/hospitals/:hospital/reviews", async (req, res) => {
   const hospital = req.hospital;
-  const user = req.body.user.sub;
 
-  // console.log(req.user);
+  const userSub = req.body.user.sub;
+  // console.log(user._id);
+
+  // Find user in the db.
+  if (!userSub) {
+    res.status(500).json({ message: "user is not logged in!" });
+  } else {
+    User.findOne({ auth0sub: userSub }).exec((err, user) => {
+      if (err) {
+        throw err;
+      }
+      console.log(user._id);
+    });
+  }
   if (!hospital) {
     res.status(404).json("Cannot leave a review. No hospital found.");
   }
+  // console.log(req.user);
   const review = new Review(req.body.values);
 
   // The link between hospital and review
   review.hospital = req.hospital._id;
+
+  // // The link between user and review
+  // review.user = user._id;
 
   review.save((err) => {
     if (err) {
