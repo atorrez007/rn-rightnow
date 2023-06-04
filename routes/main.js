@@ -458,10 +458,11 @@ router.get("/hospitals/:hospital/reviews", (req, res) => {
 // Add review to users reviews
 router.post("/hospitals/:hospital/reviews", async (req, res) => {
   const hospital = req.hospital;
-
   const userSub = req.body.user.sub;
-  // console.log(user._id);
 
+  // console.log(req.user);
+
+  // review.user = user._id;
   // Find user in the db.
   if (!userSub) {
     res.status(500).json({ message: "user is not logged in!" });
@@ -470,39 +471,46 @@ router.post("/hospitals/:hospital/reviews", async (req, res) => {
       if (err) {
         throw err;
       }
-      console.log(user._id);
-    });
-  }
-  if (!hospital) {
-    res.status(404).json("Cannot leave a review. No hospital found.");
-  }
-  // console.log(req.user);
-  const review = new Review(req.body.values);
+      // creation of a new review
+      const review = new Review(req.body.values);
 
-  // The link between hospital and review
-  review.hospital = req.hospital._id;
+      // The link between hospital and review
+      review.hospital = req.hospital._id;
 
-  // // The link between user and review
-  // review.user = user._id;
+      // The link between user and review
+      review.user = user._id;
 
-  review.save((err) => {
-    if (err) {
-      throw err;
-    }
-    Hospital.findById({ _id: req.hospital._id }, (err, hospital) => {
-      if (err) {
-        throw err;
-      }
-      hospital.reviews.push(review._id);
-
-      hospital.save((err) => {
+      // The link between review and user
+      user.reviews.push(review._id);
+      user.save((err) => {
         if (err) {
           throw err;
         }
-        res.json("Review added to Hospital!");
+      });
+      review.save((err) => {
+        if (err) {
+          throw err;
+        }
+
+        Hospital.findById({ _id: req.hospital._id }, (err, hospital) => {
+          if (!hospital) {
+            res.status(404).json("Cannot leave a review. No hospital found.");
+          }
+          if (err) {
+            throw err;
+          }
+          hospital.reviews.push(review._id);
+
+          hospital.save((err) => {
+            if (err) {
+              throw err;
+            }
+            res.json("Review added to Hospital!");
+          });
+        });
       });
     });
-  });
+  }
 });
 
 // Admin endpoints. Requires privelege.
