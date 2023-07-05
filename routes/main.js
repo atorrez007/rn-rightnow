@@ -456,6 +456,63 @@ router.get("/hospitals/:hospital/reviews", (req, res) => {
 
 // Will be protected and checked for user in db.
 // Add review to users reviews
+// router.post("/hospitals/:hospital/reviews", async (req, res) => {
+//   const hospital = req.hospital;
+//   const userSub = req.body.user.sub;
+
+//   // console.log(req.user);
+
+//   // review.user = user._id;
+//   // Find user in the db.
+//   if (!userSub) {
+//     res.status(500).json({ message: "user is not logged in!" });
+//   } else {
+//     User.findOne({ auth0sub: userSub }).exec((err, user) => {
+//       if (err) {
+//         throw err;
+//       }
+//       // creation of a new review
+//       const review = new Review(req.body.values);
+
+//       // The link between hospital and review
+//       review.hospital = req.hospital._id;
+
+//       // The link between user and review
+//       review.user = user._id;
+
+//       // The link between review and user
+//       user.reviews.push(review._id);
+//       user.save((err) => {
+//         if (err) {
+//           throw err;
+//         }
+//       });
+//       review.save((err) => {
+//         if (err) {
+//           throw err;
+//         }
+
+//         Hospital.findById({ _id: req.hospital._id }, (err, hospital) => {
+//           if (!hospital) {
+//             res.status(404).json("Cannot leave a review. No hospital found.");
+//           }
+//           if (err) {
+//             throw err;
+//           }
+//           hospital.reviews.push(review._id);
+
+//           hospital.save((err) => {
+//             if (err) {
+//               throw err;
+//             }
+//             res.json("Review added to Hospital!");
+//           });
+//         });
+//       });
+//     });
+//   }
+// });
+
 router.post("/hospitals/:hospital/reviews", async (req, res) => {
   const hospital = req.hospital;
   const userSub = req.body.user.sub;
@@ -492,7 +549,7 @@ router.post("/hospitals/:hospital/reviews", async (req, res) => {
           throw err;
         }
 
-        Hospital.findById({ _id: req.hospital._id }, (err, hospital) => {
+        Hospital.findById(req.hospital._id).exec((err, hospital) => {
           if (!hospital) {
             res.status(404).json("Cannot leave a review. No hospital found.");
           }
@@ -505,7 +562,33 @@ router.post("/hospitals/:hospital/reviews", async (req, res) => {
             if (err) {
               throw err;
             }
-            res.json("Review added to Hospital!");
+
+            // Calculate the overall score for the hospital
+            Review.aggregate([
+              { $match: { hospital: hospital._id } },
+              {
+                $group: {
+                  _id: null,
+                  averageScore: { $avg: "$overallScore" },
+                },
+              },
+            ]).exec((err, result) => {
+              if (err) {
+                throw err;
+              }
+              if (result.length > 0) {
+                const averageScore = result[0].averageScore;
+                hospital.overallScore = averageScore;
+                hospital.save((err) => {
+                  if (err) {
+                    throw err;
+                  }
+                  res.json("Review added to Hospital!");
+                });
+              } else {
+                res.status(404).json("Cannot calculate overall score.");
+              }
+            });
           });
         });
       });
@@ -547,7 +630,6 @@ router.post("/signup", async (req, res) => {
           throw err;
         }
       });
-      console.log(`User saved into db ${user}`);
     }
   } catch (error) {
     console.log(error);

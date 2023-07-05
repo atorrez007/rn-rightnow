@@ -12,6 +12,7 @@ const hospitalSchema = new Schema({
   county: { type: String },
   phoneNumber: { type: String },
   img: { type: String },
+  overallScore: { type: Number },
   reviews: [{ type: Schema.Types.ObjectId, ref: "Review" }],
 });
 
