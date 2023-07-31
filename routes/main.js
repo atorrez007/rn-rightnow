@@ -11,7 +11,7 @@ const fetch = (...args) =>
 const rawHospitalData = fs.readFileSync("test-hospital-data.json", "utf-8");
 const hospitalObj = JSON.parse(rawHospitalData);
 const offSetParams = [
-  0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5300,
+  0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5300, 5400,
 ];
 // Query endpoint for CMS Hospital List found.
 // Raw data has been saved to hospital-data-query.json
@@ -42,70 +42,75 @@ router.get("/load-data", async (req, res) => {
     if (err) throw err;
   });
 
-  // const hospitalforDatabase = Object.values(hospitalObj);
+  // create a for loop with all offSetParam values.
+
   try {
-    const response = await fetch(
-      `https://data.cms.gov/provider-data/api/1/datastore/query/c9888e32-7acc-59ad-9915-fbdb8128d611?offset=0&count=true&results=true&schema=true&keys=true&format=json&rowIds=false`
-    );
+    for (const offset of offSetParams) {
+      console.log(`Loading data with offset ${offset}`);
 
-    const hospitalData = await response.json();
+      const response = await fetch(
+        `https://data.cms.gov/provider-data/api/1/datastore/query/xubh-q36u/0?offset=${offset}&count=true&results=true&schema=true&keys=true&format=json&rowIds=false`
+      );
 
-    for (let i = 0; i < hospitalData.results.length; i++) {
-      const item = hospitalData.results[i];
+      const hospitalData = await response.json();
 
-      const existingHospital = await Hospital.findOne({
-        hospitalId: item.facility_id,
-      });
+      for (let i = 0; i < hospitalData.results.length; i++) {
+        const item = hospitalData.results[i];
 
-      if (existingHospital) {
-        continue;
+        const existingHospital = await Hospital.findOne({
+          hospitalId: item.facility_id,
+        });
+
+        if (existingHospital) {
+          continue;
+        }
+
+        let hospital = new Hospital({
+          hospitalId: item.facility_id,
+          name: item.facility_name,
+          address: item.address,
+          city: item.citytown,
+          state: item.state,
+          zipCode: item.zip_code,
+          county: item.county_name,
+          phoneNumber: item.phone_number,
+          img: "https://lungdoctors.com/assets/images/hospitals/baptist-hospital-in-miami.jpg",
+          reviews: [],
+        });
+
+        let review = new Review({
+          hospital: hospital._id,
+          shift: ["3/12 hour shifts"],
+          specialty: ["Medsurg"],
+          nurseRatio: "1:4 patients",
+          text: "I love this hospital!",
+          chartingSoftware: "Epic",
+          accessibility: "8",
+          diningOptions: ["on-site cafeteria", "vending machines"],
+          scrubColor: "gray",
+          accommodations: "Hotel",
+          safety: "7",
+          parking: "Paid/Reimbursed",
+          overallScore: 8,
+          user: "",
+        });
+
+        // reference in the hospital.reviews
+        hospital.reviews.push(review._id);
+
+        // reference the review in the user.reviews array.
+        user.reviews.push(review._id);
+        // referencing the user in the reviews object.
+        review.user = user._id;
+
+        review.save((err) => {
+          if (err) throw err;
+        });
+
+        hospital.save((err) => {
+          if (err) throw err;
+        });
       }
-
-      let hospital = new Hospital({
-        hospitalId: item.facility_id,
-        name: item.facility_name,
-        address: item.address,
-        city: item.city,
-        state: item.state,
-        zipCode: item.zip_code,
-        county: item.county_name,
-        phoneNumber: item.phone_number,
-        img: "https://lungdoctors.com/assets/images/hospitals/baptist-hospital-in-miami.jpg",
-        reviews: [],
-      });
-
-      let review = new Review({
-        hospital: hospital._id,
-        shift: ["3/12 hour shifts"],
-        specialty: "Medsurg",
-        nurseRatio: "1:4 patients",
-        text: "I love this hospital!",
-        chartingSoftware: "Epic",
-        accessibility: "8",
-        dinning: ["on-site cafeteria", "vending machines"],
-        scrubColor: "gray",
-        housing: "Hotel",
-        safety: "7",
-        parking: "Paid/Reimbursed",
-        overallScore: 8,
-        user: "",
-      });
-
-      // reference in the hospital.reviews
-      hospital.reviews.push(review._id);
-
-      // reference the review in the user.reviews array.
-      user.reviews.push(review._id);
-      // referencing the user in the reviews object.
-      review.user = user._id;
-
-      review.save((err) => {
-        if (err) throw err;
-      });
-
-      hospital.save((err) => {
-        if (err) throw err;
-      });
     }
     res.send("Generated!");
   } catch (err) {
@@ -113,66 +118,6 @@ router.get("/load-data", async (req, res) => {
     res.send("Error Generating Data.");
   }
 });
-
-//   const hospitalforDatabase = Object.values(hospitalObj);
-//   for (let i = 0; i < hospitalforDatabase.length; i++) {
-//     const item = hospitalforDatabase[i];
-
-//     const existingHospital = await Hospital.findOne({
-//       hospitalId: item["Facility ID"],
-//     });
-
-//     if (existingHospital) {
-//       continue;
-//     }
-
-//     let hospital = new Hospital({
-//       hospitalId: item["Facility ID"],
-//       name: item["Facility Name"],
-//       address: item.Address,
-//       city: item.City,
-//       state: item.State,
-//       zipCode: item["ZIP Code"],
-//       county: item["County Name"],
-//       phoneNumber: item["Phone Number"],
-//       reviews: [],
-//     });
-
-//     let review = new Review({
-//       hospital: hospital._id,
-//       shift: ["3/12 hour shifts"],
-//       specialty: "Medsurg",
-//       nurseRatio: "1:4 patients",
-//       text: "I love this hospital!",
-//       chartingSoftware: "Epic",
-//       accessibility: "8",
-//       dinning: ["on-site cafeteria", "vending machines"],
-//       scrubColor: "gray",
-//       housing: "Hotel",
-//       safety: "7",
-//       parking: "Paid/Reimbursed",
-//       overallScore: 8,
-//       user: "",
-//     });
-
-//     // reference in the hospital.reviews
-//     hospital.reviews.push(review._id);
-
-//     // reference the review in the user.reviews array.
-//     user.reviews.push(review._id);
-//     // referencing the user in the reviews object.
-//     review.user = user._id;
-
-//     review.save((err) => {
-//       if (err) throw err;
-//     });
-
-//     hospital.save((err) => {
-//       if (err) throw err;
-//     });
-//   }
-//   res.send("Generated!");
-// });
 
 // middleware
 const checkUser = async (req, res, next) => {
