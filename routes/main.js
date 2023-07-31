@@ -72,7 +72,7 @@ router.get("/load-data", async (req, res) => {
           city: item.citytown,
           state: item.state,
           zipCode: item.zip_code,
-          county: item.county_name,
+          county: item.countyparish,
           phoneNumber: item.phone_number,
           img: "https://lungdoctors.com/assets/images/hospitals/baptist-hospital-in-miami.jpg",
           reviews: [],
