@@ -590,11 +590,15 @@ router.get("/users", (req, res) => {
   });
 });
 
-router.get("/users/:user", (req, res) => {
+router.get("/users/:user", async (req, res) => {
   const user = req.user;
   if (!user) {
     return res.status(404).json("User not found.");
   }
+  await user.populate({
+    path: "reviews",
+  });
+  await user.populate({ path: "reviews.hospital" });
   res.send(user);
 });
 
