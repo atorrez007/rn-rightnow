@@ -1,10 +1,22 @@
+const dotenv = require("dotenv"); // Add this line
+
+// (default to development environment, switch to "production" for production environment)
+process.env.NODE_ENV = "development";
+
+// Load environment variables based on NODE_ENV
+const envFile =
+  process.env.NODE_ENV === "production"
+    ? ".env.production"
+    : ".env.development";
+dotenv.config({ path: envFile });
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
-const { expressjwt: jwt } = require("express-jwt");
-
+const jwt = require("express-jwt");
 const jwks = require("jwks-rsa");
 const axios = require("axios");
+
 const unprotected = [
   "/home",
   "/testing",
@@ -14,7 +26,6 @@ const unprotected = [
   // "/hospitals/:hospital/reviews",
   // "/search/:hospitalId",
 ];
-require("dotenv").config();
 
 const app = express();
 
@@ -34,26 +45,18 @@ app.use((req, res, next) => {
   next();
 });
 
-mongoose.connect("mongodb://localhost/rn-data", {
+const port = process.env.PORT || 8000;
+const mongodbURI = process.env.MONGODB_URI;
+
+const dbURI =
+  process.env.USE_ATLAS === "true"
+    ? process.env.ATLAS_DB_URI
+    : process.env.LOCAL_DB_URI;
+
+mongoose.connect(dbURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
-
-// const jwtCheck = jwt({
-//   secret: jwks.expressJwtSecret({
-//     cache: true,
-//     rateLimit: true,
-//     jwksRequestsPerMinute: 5,
-//     jwksUri: "https://dev-rbgs3itcq1lp4l2d.us.auth0.com/.well-known/jwks.json",
-//   }),
-//   algorithms: ["RS256"],
-//   audience: "RN site identifier ",
-//   issuer: "https://dev-rbgs3itcq1lp4l2d.us.auth0.com/",
-//   tokenSigningAlg: ["RS256"],
-// }).unless({ path: unprotected });
-
-// enforce on all endpoints
-// app.use(jwtCheck);
 
 app.use(bodyParser.json());
 app.use(
@@ -69,7 +72,9 @@ app.get("/testing", (req, res) => {
   res.send({ message: "test" });
 });
 
-const port = process.env.PORT || 8000;
+console.log(`Current environment: ${process.env.NODE_ENV}.`);
+console.log(`Your mongoURI is ${dbURI}.`);
+
 app.listen(port, () => {
   console.log(`This is port ${port}. I'm listening...`);
 });
