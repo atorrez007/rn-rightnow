@@ -18,7 +18,7 @@ const reviewSchema = new Schema({
   parking: { type: String },
   overallScore: { type: Number },
   user: { type: Schema.Types.ObjectId, ref: "User" },
-  date: { type: String, required: true, default: new Date() },
+  date: { type: Date, required: true, default: Date.now },
 });
 
 const Review = mongoose.model("Review", reviewSchema);

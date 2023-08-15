@@ -46,7 +46,7 @@ app.use((req, res, next) => {
 });
 
 const port = process.env.PORT || 8000;
-const mongodbURI = process.env.MONGODB_URI;
+// const mongodbURI = process.env.MONGODB_URI;
 
 const dbURI =
   process.env.USE_ATLAS === "true"
